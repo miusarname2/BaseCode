@@ -1,18 +1,23 @@
 #include <Arduino.h>
+#include "controller/GPSModule.h"
 
 // put function declarations here:
-int myFunction(int, int);
+GPSModule gpsModule(2,16,17,9600);
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  gpsModule.begin();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
+  gpsModule.update();
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  if (gpsModule.isLocationUpdated())
+  {
+    Serial.print("Latitud:");
+    Serial.print(gpsModule.getLatitude(),6);
+    Serial.print("Longitud");
+    Serial.print(gpsModule.getLongitude(),6);
+  }
+  
 }
