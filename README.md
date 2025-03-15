@@ -2,73 +2,117 @@
 
 ## Descripción General
 
-Este repositorio tiene como objetivo desarrollar el código para el manejo de controladores del ESP32, en conjunto con un módulo Ublox NEO-6M, el cual se utilizará para obtener la ubicación actual del dispositivo. Se busca construir una solución modular, escalable y de fácil mantenimiento que facilite futuras ampliaciones o modificaciones.
+Este repositorio tiene como objetivo desarrollar un sistema modular para el manejo de controladores del ESP32. La aplicación integra un módulo GPS (Ublox NEO-6M) para obtener la ubicación actual del dispositivo y un controlador MQTT para enviar periódicamente esta información a un servidor. Se busca construir una solución escalable, modular y de fácil mantenimiento que permita futuras ampliaciones o modificaciones.
 
 ## Estructura del Proyecto
 
-La estructura del repositorio se organiza de la siguiente manera:
+La estructura del repositorio está organizada de la siguiente manera:
 
 ```
-/src
-   └── /Controllers
-         ├── BaseController.cpp
-         └── AnotherControllerExample.cpp
-/main.cpp
+├── .gitignore
+├── .vscode
+│   ├── extensions.json
+│   └── settings.json
+├── README.md
+├── include
+│   └── README
+├── lib
+│   └── README
+├── platformio.ini
+├── src
+│   ├── controller
+│   │   ├── ESPModule.h
+│   │   ├── GPSModule.h
+│   │   └── MQTTController.h
+│   ├── MQTTController.cpp
+│   └── main.cpp
+└── test
+    └── README
 ```
 
 ### Detalle de la Estructura
 
+- **.vscode/**  
+  Configuraciones específicas para Visual Studio Code, ayudando a mantener un entorno de desarrollo coherente.
+
+- **include/** y **lib/**  
+  Carpetas reservadas para incluir archivos y bibliotecas adicionales, en caso de ser necesario.
+
+- **platformio.ini**  
+  Archivo de configuración para PlatformIO, donde se definen la plataforma, placa, framework y dependencias (por ejemplo, *TinyGPSPlus* y *PubSubClient*).
+
 - **src/**  
-  Directorio raíz que contiene todo el código fuente del proyecto.
+  Directorio que contiene el código fuente del proyecto.
+  
+  - **controller/**  
+    Carpeta dedicada a los módulos o controladores del sistema.
+    
+    - **ESPModule.h:**  
+      Clase base abstracta para los módulos del ESP32. Todas las clases controladoras heredan de esta clase, garantizando una interfaz común (`begin()` y `update()`).
+      
+    - **GPSModule.h:**  
+      Módulo encargado de gestionar el procesamiento de datos del GPS. Utiliza la librería *TinyGPSPlus* para parsear las tramas NMEA y obtener la ubicación.
+      
+    - **MQTTController.h:**  
+      Módulo que administra la conexión MQTT. Extiende de **ESPModule** y se encarga de la conexión, reconexión y publicación de datos a un broker MQTT.
+      
+  - **MQTTController.cpp:**  
+    Implementación de la clase **MQTTController**, que contiene la lógica para establecer y mantener la conexión MQTT y publicar los mensajes.
+    
+  - **main.cpp:**  
+    Archivo principal del proyecto. Se encarga de inicializar la conexión WiFi, instanciar y actualizar los módulos (GPS y MQTT). Aquí se orquesta el envío de la ubicación en formato JSON cada vez que el GPS actualice la posición.
 
-- **Controllers/**  
-  Carpeta dedicada a los controladores, que son los componentes encargados de gestionar la interacción con el hardware (ESP32 y Ublox NEO-6M).  
-  - **BaseController.cpp:**  
-    Archivo base que contiene las funciones y métodos comunes que serán heredados o reutilizados en otros controladores.
-  - **AnotherControllerExample.cpp:**  
-    Ejemplo de un controlador adicional. Este archivo puede servir de plantilla o ser adaptado a nuevos requerimientos conforme el proyecto evolucione.
-
-- **main.cpp**  
-  Archivo principal del proyecto. Aquí se orquesta la inicialización del sistema y la integración de los distintos controladores.
+- **test/**  
+  Espacio reservado para pruebas unitarias o de integración que aseguren el correcto funcionamiento del sistema.
 
 ## Uso de Programación Orientada a Objetos (POO)
 
-Aunque no es un requisito absoluto, se recomienda utilizar la programación orientada a objetos por las siguientes razones:
+El proyecto se ha diseñado utilizando un enfoque orientado a objetos por las siguientes razones:
 
 - **Modularidad:**  
-  La POO permite encapsular la lógica en clases, lo que facilita la separación de responsabilidades y la reutilización de código.
+  La POO permite encapsular la lógica en clases. Cada módulo (por ejemplo, GPSModule y MQTTController) tiene responsabilidades bien definidas, lo que facilita la separación de funcionalidades y la reutilización de código.
 
 - **Escalabilidad:**  
-  Al trabajar con clases, se puede extender o modificar el comportamiento de componentes individuales sin afectar la estructura global del sistema.
+  Gracias al diseño basado en clases y la herencia de la clase **ESPModule**, es sencillo agregar nuevos controladores o extender los existentes sin alterar la estructura global del sistema.
 
 - **Mantenibilidad:**  
-  Un diseño basado en POO facilita la comprensión y el mantenimiento del código, especialmente en proyectos colaborativos o a largo plazo.
+  Un código organizado y modular facilita la localización de errores, la realización de modificaciones y la integración de nuevas funcionalidades. Además, el uso de estándares en los mensajes de commit (mediante la extensión "Conventional commits") permite un historial de cambios claro y uniforme, mejorando la colaboración en equipos.
 
-Cabe destacar que la decisión de utilizar POO es discutible y puede ajustarse según las necesidades específicas del proyecto.
+## Flujo de Trabajo y Funcionalidad
+
+1. **Inicialización:**  
+   - En `main.cpp`, se inicia la conexión WiFi y se instancian los módulos.
+   - Se llama al método `begin()` de cada módulo para realizar las configuraciones iniciales.
+
+2. **Actualización Continua:**  
+   - En el `loop()`, se invoca el método `update()` de cada módulo.
+   - **GPSModule:** Procesa continuamente la información del GPS. Cuando detecta una nueva ubicación, habilita la actualización.
+   - **MQTTController:** Verifica y mantiene la conexión al broker MQTT, reconectándose automáticamente en caso de desconexión, y se encarga de enviar los datos en el formato deseado.
+
+3. **Publicación de Datos:**  
+   - Cuando el GPS actualiza su ubicación, se crea un mensaje JSON con la latitud y longitud.
+   - Este mensaje se publica en el tópico definido a través del **MQTTController**.
 
 ## Estándar de Commits
 
-Se recomienda la instalación de la extensión **"Conventional commits"** en Visual Studio Code para que los mensajes de commit sean:
-
-- **Más claros y descriptivos:**  
+Se recomienda utilizar la extensión **"Conventional commits"** en Visual Studio Code para lograr:
+- **Mensajes claros y descriptivos:**  
   Facilita la comprensión del historial de cambios y mejora la comunicación entre desarrolladores.
+- **Estandarización de mensajes:**  
+  Mantiene un formato uniforme que resulta útil para la integración continua y el versionado semántico.
 
-- **Estandarizados:**  
-  Permite mantener un formato uniforme en los mensajes de commit, lo que es útil para la integración continua y el versionado semántico del proyecto.
-
-La adopción de esta extensión ayudará a que el desarrollo sea más organizado y que los cambios en el repositorio sean fácilmente rastreables.
+Adoptar este estándar contribuye a un desarrollo más organizado y a un seguimiento eficiente de los cambios en el repositorio.
 
 ## Justificación Técnica
 
 1. **Modularidad y Organización del Código:**  
-   La estructura propuesta, separando la lógica de controladores en su propio directorio y dejando el archivo principal de arranque en `main.cpp`, facilita la localización y el mantenimiento del código. Esto es especialmente útil en proyectos embebidos donde la claridad y la separación de responsabilidades son críticas para la eficiencia del desarrollo.
+   Separar la lógica de controladores en su propio directorio y centralizar la inicialización en `main.cpp` permite una estructura clara, facilitando el mantenimiento y la extensión del sistema.
 
 2. **Escalabilidad:**  
-   Implementar un diseño orientado a objetos permite que el sistema se expanda sin necesidad de una reestructuración completa. Se podrán agregar nuevos controladores o modificar los existentes de forma modular, adaptándose a futuras necesidades o mejoras en el hardware.
+   La utilización de clases y la herencia de **ESPModule** posibilitan agregar nuevos módulos (por ejemplo, nuevos sensores o métodos de comunicación) sin reestructurar el proyecto por completo.
 
 3. **Mantenibilidad:**  
-   Un código bien organizado y documentado resulta en una mayor facilidad para identificar y corregir errores. Además, el uso de un estándar en los mensajes de commit (mediante "Conventional commits") mejora la colaboración y el seguimiento de cambios, haciendo que el proyecto sea más robusto en entornos colaborativos.
+   La modularidad, junto con una buena documentación y el uso de commit messages estandarizados, reduce la curva de aprendizaje y simplifica la identificación y corrección de errores.
 
 4. **Facilidad en la Colaboración:**  
-   Al estandarizar la estructura del repositorio y los mensajes de commit, se facilita la integración de nuevos desarrolladores. Todos tienen un marco de referencia claro sobre cómo se organiza el proyecto y cómo se deben registrar los cambios, lo que reduce la curva de aprendizaje y minimiza errores en el manejo del código.
-
+   Una estructura bien definida y documentada permite que nuevos miembros del equipo comprendan rápidamente el flujo y la organización del código, facilitando la integración y la colaboración en el proyecto.
