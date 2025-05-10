@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <PubSubClient.h>
 #include "ESPModule.h"
+#include <WiFi.h> 
 
 class MQTTController : public ESPModule {
 public:

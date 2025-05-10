@@ -1,4 +1,4 @@
-#include "MQTTController.h"
+#include "controller/MQTTController.h"
 
 MQTTController::MQTTController(WiFiClient &client, const char* server, uint16_t port, const char* clientID)
   : mqttClient(client), mqttServer(server), mqttPort(port), clientID(clientID) {}
