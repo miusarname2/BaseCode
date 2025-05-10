@@ -1,4 +1,6 @@
+# Wokwi Configuration File
+# Reference: https://docs.wokwi.com/vscode/project-config
 [wokwi]
 version = 1
-firmware = 'path-to-your-firmware.hex'
-elf = 'path-to-your-firmware.elf'
+firmware = '.pio/build/adafruit_feather_esp32s2/firmware.bin'
+elf = '.pio/build/adafruit_feather_esp32s2/firmware.elf'
